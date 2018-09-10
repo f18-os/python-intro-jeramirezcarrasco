@@ -1,3 +1,7 @@
+#Jorge Ramirez Carrasco
+#9/10/2018
+#Theory of Operating Systems
+
 import os, sys, time, re
 
 pid = os.getpid()
