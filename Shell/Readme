@@ -1,7 +1,7 @@
 This is the shell project with redirect and piping added
 
 It can accept cat, wc, echo and ls
-All first command need to be followed by < and the file it want to look at
+All first commands need to be followed by < and the file it want to look at
 ex. cat < text.txt 
 This program can accept piping and redirects at the same time except for two cases mostly because they didnt make sense using them
 [(command) < (file) > (file)] and [(command) < (file) | (command) < ]
