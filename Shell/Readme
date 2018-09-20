@@ -1,0 +1,10 @@
+This is the shell project with redirect and piping added
+
+It can accept cat, wc, echo and ls
+All first command need to be followed by < and the file it want to look at
+ex. cat < text.txt 
+This program can accept piping and redirects at the same time except for two cases mostly because they didnt make sense using them
+[(command) < (file) > (file)] and [(command) < (file) | (command) < ]
+Other than that it can be combined an infinite number of times
+
+Theres a bug i couldnt fix that sometimes stops the user from writing a new command a second time but not third
