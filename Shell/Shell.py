@@ -56,8 +56,18 @@ def Exec1(Command , Command_Line):
                      (os.getpid(), pid)).encode())
         if len(Command_Line) > 0 and Command_Line[0] == "<":
             Here_string(Command, Command_Line[1:])
+        elif Command == "ls":
+            cwd = os.getcwd()
+            args = [Command, cwd]
+            for dir in re.split(":", os.environ['PATH']):
+                program = "%s/%s" % (dir, args[0])
+                os.write(1, ("Child:  ...trying to exec %s\n" % program).encode())
+                try:
+                    os.execv(program, args)
+                except FileNotFoundError:
+                    pass
         else:
-            os.write(2, ("Missing Input\n".encode()))
+            os.write(2, ("Missing Input file redirection\n".encode()))
     else:  # parent (forked ok)
         os.write(1, ("Parent: My pid=%d.  Child's pid=%d\n" %
                      (pid, rc)).encode())
@@ -154,7 +164,7 @@ def Pipe_String(Command_Line, args):
 
 
 while 1:
-    Command = input("Write wanted command\n")
+    Command = input("$\n")
     Command = Command.split()
     Command_List(Command[0],Command[1:])
 
