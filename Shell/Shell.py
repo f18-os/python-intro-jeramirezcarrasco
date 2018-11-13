@@ -29,15 +29,13 @@ def Command_List(Command , Command_Line):
 def Command_List2(Command , Command_Line):
 
     if Command == "wc" or Command == "cat" or Command == "ls" or Command == "echo":
-        os.write(1, Command.encode())
-        Exec2(Command, Command_Line[1:])
+        Exec2(Command, Command_Line)
 
     else:
         os.write(2, ("command not found, write help for available commands\n" .encode()))
 
 
 def Redirects(Command_Line, args):
-    os.write(2, (Command_Line[0].encode()))
     if Command_Line[0] == ">":
         There_string(Command_Line[1:], args)
     elif Command_Line[0] == "|":
@@ -58,7 +56,10 @@ def Exec1(Command , Command_Line):
             Here_string(Command, Command_Line[1:])
         elif Command == "ls":
             cwd = os.getcwd()
-            args = [Command, cwd]
+            Command_Line.insert(0, cwd)
+            Here_string(Command, Command_Line)
+        elif Command == "echo":
+            args = [Command, Command_Line[0]]
             for dir in re.split(":", os.environ['PATH']):
                 program = "%s/%s" % (dir, args[0])
                 os.write(1, ("Child:  ...trying to exec %s\n" % program).encode())
@@ -76,12 +77,11 @@ def Exec1(Command , Command_Line):
                      childPidCode).encode())
 
 def Exec2(Command , Command_Line):
-    if len(Command_Line) > 1 and (Command_Line[1] == "<" or Command_Line[1] == "|"):
-            args = [Command, Command_Line[0]]
-            Redirects(Command_Line[1:], args)
+    if len(Command_Line) > 1 and ((Command_Line[1] == ">" or Command_Line[1] == "|")):
+        args = [Command, Command_Line[0]]
+        Redirects(Command_Line[1:], args)
     else:
         args = [Command]
-        os.write(2, Command.encode())
         for dir in re.split(":", os.environ['PATH']):  # try each directory in path
             program = "%s/%s" % (dir, args[0])
             try:
@@ -112,7 +112,6 @@ def Here_string(Command , Command_Line):
 
 
 def There_string(Command_Line, args):
-
     os.close(1)  # redirect child's stdout
     sys.stdout = open(Command_Line[0], "w")
     fd = sys.stdout.fileno()  # os.open("p4-output.txt", os.O_CREAT)
@@ -142,7 +141,7 @@ def Pipe_String(Command_Line, args):
         sys.stdout = os.fdopen(fdzero)
         fd = sys.stdout.fileno()
         os.set_inheritable(fd, True)
-        Command_List2(Command_Line[0], Command_Line[1:])
+        Command_List2(Command_Line[0], Command_Line[0:])
         sys.exit(1)  # terminate with error
 
     else:
