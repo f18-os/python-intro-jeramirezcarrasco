@@ -4,13 +4,10 @@ import os, sys, time, re
 
 pid = os.getpid()
 
-os.write(1, ("Initial pid is (pid:%d)\n" % pid).encode())
 
 def Command_List(Command , Command_Line):
 
-    if Command == "wc" or Command == "cat" or Command == "ls" or Command == "echo":
-        Exec1(Command, Command_Line)
-    elif Command == "exit":
+    if Command == "exit":
         sys.exit(0)
     elif Command == "help":
 
@@ -24,16 +21,12 @@ def Command_List(Command , Command_Line):
         print("exit to exit\n")
 
     else:
-        os.write(2, ("command not found, write help for available commands\n" .encode()))
+        Exec1(Command, Command_Line)
+
 
 def Command_List2(Command , Command_Line):
 
-    if Command == "wc" or Command == "cat" or Command == "ls" or Command == "echo":
-        Exec2(Command, Command_Line)
-
-    else:
-        os.write(2, ("command not found, write help for available commands\n" .encode()))
-
+    Exec2(Command, Command_Line)
 
 def Redirects(Command_Line, args):
     if Command_Line[0] == ">":
@@ -50,31 +43,34 @@ def Exec1(Command , Command_Line):
         os.write(2, ("fork failed, returning %d\n" % rc).encode())
         sys.exit(1)
     elif rc == 0:  # child
-        os.write(1, ("Child: My pid==%d.  Parent's pid=%d\n" %
-                     (os.getpid(), pid)).encode())
-        if len(Command_Line) > 0 and Command_Line[0] == "<":
+        if len(Command_Line) > 1 and Command_Line[0] == "<":
             Here_string(Command, Command_Line[1:])
-        elif Command == "ls":
-            cwd = os.getcwd()
-            Command_Line.insert(0, cwd)
+        if len(Command_Line) > 1 :
             Here_string(Command, Command_Line)
-        elif Command == "echo":
+        elif len(Command_Line) == 1:
             args = [Command, Command_Line[0]]
             for dir in re.split(":", os.environ['PATH']):
                 program = "%s/%s" % (dir, args[0])
-                os.write(1, ("Child:  ...trying to exec %s\n" % program).encode())
                 try:
                     os.execv(program, args)
                 except FileNotFoundError:
                     pass
+            os.write(2, ("Child:    Could not exec %s\n" % args[0]).encode())
+            sys.exit(1)
+        elif len(Command_Line) == 0 and (Command !="cat" and Command != "wc" and Command != "cd" and Command != "mv" and Command != "cp"):
+            args = [Command]
+            for dir in re.split(":", os.environ['PATH']):
+                program = "%s/%s" % (dir, args[0])
+                try:
+                    os.execv(program, args)
+                except FileNotFoundError:
+                    pass
+            os.write(2, ("Child:    Could not exec %s\n" % args[0]).encode())
+            sys.exit(1)
         else:
-            os.write(2, ("Missing Input file redirection\n".encode()))
+            os.write(2, ("Missing file input\n".encode()))
     else:  # parent (forked ok)
-        os.write(1, ("Parent: My pid=%d.  Child's pid=%d\n" %
-                     (pid, rc)).encode())
         childPidCode = os.wait()
-        os.write(1, ("Parent: Child %d terminated with exit code %d\n" %
-                     childPidCode).encode())
 
 def Exec2(Command , Command_Line):
     if len(Command_Line) > 1 and ((Command_Line[1] == ">" or Command_Line[1] == "|")):
@@ -88,8 +84,8 @@ def Exec2(Command , Command_Line):
                 os.execve(program, args, os.environ)  # try to exec program
             except FileNotFoundError:  # ...expected
                 pass
-
-        sys.exit(1)  # terminate with error
+        os.write(2, ("Child:    Could not exec %s\n" % args[0]).encode())
+        sys.exit(1)
 
 
 
@@ -101,7 +97,6 @@ def Here_string(Command , Command_Line):
     else:
         for dir in re.split(":", os.environ['PATH']):
             program = "%s/%s" % (dir, args[0])
-            os.write(1, ("Child:  ...trying to exec %s\n" % program).encode())
             try:
                 os.execv(program, args)
             except FileNotFoundError:
@@ -158,6 +153,7 @@ def Pipe_String(Command_Line, args):
             except FileNotFoundError:  # ...expected
                 pass  # ...fail quietly
 
+    os.write(2, ("Child:    Could not exec %s\n" % args[0]).encode())
     sys.exit(1)
 
 
