@@ -45,7 +45,9 @@ def Exec1(Command , Command_Line):
     elif rc == 0:  # child
         if len(Command_Line) > 1 and Command_Line[0] == "<":
             Here_string(Command, Command_Line[1:])
-        if len(Command_Line) > 1 :
+        elif len(Command_Line) > 1 and (Command_Line[0] == "|" or Command_Line[0] == ">"):
+            Here_string2(Command, Command_Line)
+        elif len(Command_Line) > 1:
             Here_string(Command, Command_Line)
         elif len(Command_Line) == 1:
             args = [Command, Command_Line[0]]
@@ -94,6 +96,21 @@ def Here_string(Command , Command_Line):
     args = [Command, Command_Line[0]]
     if len(Command_Line) > 1 :
         Redirects(Command_Line[1:], args)
+    else:
+        for dir in re.split(":", os.environ['PATH']):
+            program = "%s/%s" % (dir, args[0])
+            try:
+                os.execv(program, args)
+            except FileNotFoundError:
+                pass
+
+    os.write(2, ("Child:    Could not exec %s\n" % args[0]).encode())
+    sys.exit(1)
+
+def Here_string2(Command, Command_Line):
+    args = [Command]
+    if len(Command_Line) > 1:
+        Redirects(Command_Line, args)
     else:
         for dir in re.split(":", os.environ['PATH']):
             program = "%s/%s" % (dir, args[0])
